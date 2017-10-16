@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action1"
+        android:icon="@drawable/ic_call"
+        android:title="@string/button_dial" />
+    <item
+        android:id="@+id/action2"
+        android:icon="@drawable/ic_map"
+        android:title="@string/button_show_map" />
+    <item
+        android:id="@+id/action3"
+        android:icon="@drawable/ic_email"
+        android:title="@string/button_email" />
+
+    <item
+        android:id="@+id/action4"
+        android:icon="@drawable/ic_add"
+        android:title="@string/button_add_contact" />
+</menu>

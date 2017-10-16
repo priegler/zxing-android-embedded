@@ -45,6 +45,7 @@ public class CustomScannerActivity extends Activity implements
     protected void onResume() {
         super.onResume();
         capture.onResume();
+
     }
 
     @Override
