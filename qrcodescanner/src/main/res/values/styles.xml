@@ -27,7 +27,7 @@
         <item name="actionMenuTextColor">@android:color/white</item>
         <item name="android:background">@color/colorPrimary</item>
         <!--app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"-->
-        <item name="app:popupTheme">@style/ThemeOverlay.AppCompat.Light</item>
+        <item name="popupTheme">@style/ThemeOverlay.AppCompat.Dark</item>
         <!--<item name="actionOverflowButtonStyle">@style/ThemeOverlay.AppCompat.Light</item>-->
         <!--<item name="drawerArrowStyle">@style/DrawerArrowStyle</item>-->
     </style>
