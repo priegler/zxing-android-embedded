@@ -16,11 +16,15 @@
 
 package at.nineyards.qrcodescanner;
 
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
 import com.google.zxing.BarcodeFormat;
 import com.google.zxing.DecodeHintType;
+import com.google.zxing.Result;
 
 import java.util.Collection;
 import java.util.Map;
@@ -67,11 +71,12 @@ public final class ScannerActivityHandler extends Handler {
             case R.id.restart_preview:
                 restartPreviewAndDecode();
                 break;
-//            case com.google.zxing.client.android.R.id.decode_succeeded:
-//                state = State.SUCCESS;
-//                Bundle bundle = message.getData();
-//                Bitmap barcode = null;
-//                float scaleFactor = 1.0f;
+
+            case R.id.decode_succeeded:
+                state = State.SUCCESS;
+                Bundle bundle = message.getData();
+                Bitmap barcode = null;
+                float scaleFactor = 1.0f;
 //                if (bundle != null) {
 //                    byte[] compressedBitmap = bundle.getByteArray(DecodeThread.BARCODE_BITMAP);
 //                    if (compressedBitmap != null) {
@@ -83,7 +88,8 @@ public final class ScannerActivityHandler extends Handler {
 //                    scaleFactor = bundle.getFloat(DecodeThread.BARCODE_SCALED_FACTOR);
 //                }
 //                activity.handleDecode((Result) message.obj, barcode, scaleFactor);
-//                break;
+                break;
+
 //            case com.google.zxing.client.android.R.id.decode_failed:
 //                // We're decoding as fast as possible, so when one decode fails, start another.
 //                state = State.PREVIEW;

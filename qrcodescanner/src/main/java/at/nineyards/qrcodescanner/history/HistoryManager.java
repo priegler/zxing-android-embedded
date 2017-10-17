@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import at.nineyards.qrcodescanner.PreferencesActivity;
 import at.nineyards.qrcodescanner.result.ResultHandler;
 
 /**
@@ -77,7 +78,7 @@ public final class HistoryManager {
     public HistoryManager(Activity activity) {
         this.activity = activity;
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-        enableHistory = true; //TODO: prefs.getBoolean(PreferencesActivity.KEY_ENABLE_HISTORY, true);
+        enableHistory = prefs.getBoolean(PreferencesActivity.KEY_ENABLE_HISTORY, true);
     }
 
     public boolean hasHistoryItems() {
@@ -152,16 +153,15 @@ public final class HistoryManager {
     public void addHistoryItem(Result result, ResultHandler handler) {
         // Do not save this item to the history if the preference is turned off, or the contents are
         // considered secure.
-        // TODO: remember duplicates
-//        if (!activity.getIntent().getBooleanExtra(Intents.Scan.SAVE_HISTORY, true) ||
-//                handler.areContentsSecure() || !enableHistory) {
-//            return;
-//        }
-//
-//        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
-//        if (!prefs.getBoolean(PreferencesActivity.KEY_REMEMBER_DUPLICATES, false)) {
-//            deletePrevious(result.getText());
-//        }
+        if (!activity.getIntent().getBooleanExtra(Intents.Scan.SAVE_HISTORY, true) ||
+                handler.areContentsSecure() || !enableHistory) {
+            return;
+        }
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+        if (!prefs.getBoolean(PreferencesActivity.KEY_REMEMBER_DUPLICATES, false)) {
+            deletePrevious(result.getText());
+        }
 
         ContentValues values = new ContentValues();
         values.put(DBHelper.TEXT_COL, result.getText());

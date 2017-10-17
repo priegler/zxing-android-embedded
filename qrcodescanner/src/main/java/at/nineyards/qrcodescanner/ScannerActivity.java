@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.os.Bundle;
-import android.os.Handler;
 import android.preference.PreferenceManager;
 import android.support.design.internal.NavigationMenu;
 import android.support.v7.app.AppCompatActivity;
@@ -30,7 +29,6 @@ import com.google.zxing.client.android.BeepManager;
 import com.google.zxing.client.android.Intents;
 import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeResult;
-import com.journeyapps.barcodescanner.CaptureManager;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 
 import java.text.DateFormat;
@@ -42,6 +40,7 @@ import java.util.Map;
 import at.nineyards.qrcodescanner.camera.FrontLightMode;
 import at.nineyards.qrcodescanner.clipboard.ClipboardInterface;
 import at.nineyards.qrcodescanner.history.HistoryActivity;
+import at.nineyards.qrcodescanner.history.HistoryItem;
 import at.nineyards.qrcodescanner.history.HistoryManager;
 import at.nineyards.qrcodescanner.result.ResultHandler;
 import at.nineyards.qrcodescanner.result.ResultHandlerFactory;
@@ -53,7 +52,6 @@ import io.github.yavski.fabspeeddial.FabSpeedDial;
  * Sample Activity extending from ActionBarActivity to display a Toolbar.
  */
 public class ScannerActivity extends AppCompatActivity {
-//    private CaptureManager capture;
     private DecoratedBarcodeView barcodeScannerView;
     private BeepManager beepManager;
     private boolean copyToClipboard;
@@ -62,6 +60,7 @@ public class ScannerActivity extends AppCompatActivity {
     private static final int HISTORY_REQUEST_CODE = 0x0000bacc;
     private View resultView;
     private TextView statusView;
+    private Result savedResultToShow;
 
     private static final Collection<ResultMetadataType> DISPLAYABLE_METADATA_TYPES =
             EnumSet.of(ResultMetadataType.ISSUE_NUMBER,
@@ -71,11 +70,17 @@ public class ScannerActivity extends AppCompatActivity {
     private MenuItem mFlashMenuItem;
     private FrontLightMode mFrontLightMode;
     private boolean mTorchActive = false;
-    private ScannerActivityHandler handler;
 
-    public Handler getHandler() {
-        return handler;
-    }
+    private SharedPreferences mPrefs;
+
+    private HistoryManager mHistoryManager;
+    private boolean mResultShown = false;
+
+
+//    private ScannerActivityHandler handler;
+//    public Handler getHandler() {
+//        return handler;
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,11 +102,11 @@ public class ScannerActivity extends AppCompatActivity {
         beepManager = new BeepManager(this);
         Intent intent = getIntent();
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        copyToClipboard = prefs.getBoolean(PreferencesActivity.KEY_COPY_TO_CLIPBOARD, true)
+        mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
+        copyToClipboard = mPrefs.getBoolean(PreferencesActivity.KEY_COPY_TO_CLIPBOARD, true)
                 && (intent == null || intent.getBooleanExtra(Intents.Scan.SAVE_HISTORY, true));
 
-        mFrontLightMode = FrontLightMode.readPref(prefs);
+        mFrontLightMode = FrontLightMode.readPref(mPrefs);
         updateFlashMenuItem();
     }
 
@@ -118,7 +123,7 @@ public class ScannerActivity extends AppCompatActivity {
         mHistoryManager.trimHistory();
         barcodeScannerView.resume();
 
-        handler = null;
+//        handler = null;
 
     }
 
@@ -128,10 +133,10 @@ public class ScannerActivity extends AppCompatActivity {
 //        capture.onPause();
         barcodeScannerView.pause();
 
-        if (handler != null) {
-            handler.quitSynchronously();
-            handler = null;
-        }
+//        if (handler != null) {
+//            handler.quitSynchronously();
+//            handler = null;
+//        }
     }
 
     @Override
@@ -148,14 +153,14 @@ public class ScannerActivity extends AppCompatActivity {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
-//        if (resultCode == RESULT_OK && requestCode == HISTORY_REQUEST_CODE
-//                && historyManager != null) {
-//            int itemNumber = intent.getIntExtra(Intents.History.ITEM_NUMBER, -1);
-//            if (itemNumber >= 0) {
-//                HistoryItem historyItem = historyManager.buildHistoryItem(itemNumber);
-//                decodeOrStoreSavedBitmap(null, historyItem.getResult());
-//            }
-//        }
+        if (resultCode == RESULT_OK && requestCode == HISTORY_REQUEST_CODE
+                && mHistoryManager != null) {
+            int itemNumber = intent.getIntExtra(Intents.History.ITEM_NUMBER, -1);
+            if (itemNumber >= 0) {
+                HistoryItem historyItem = mHistoryManager.buildHistoryItem(itemNumber);
+                decodeOrStoreSavedBitmap(null, historyItem.getResult());
+            }
+        }
     }
 
     @Override
@@ -169,26 +174,37 @@ public class ScannerActivity extends AppCompatActivity {
         return barcodeScannerView.onKeyDown(keyCode, event) || super.onKeyDown(keyCode, event);
     }
 
-    private HistoryManager mHistoryManager;
-    private boolean mResultShown = false;
+
     private BarcodeCallback callback = new BarcodeCallback() {
         @Override
         public void barcodeResult(BarcodeResult result) {
-            mResultShown = true;
+
             beepManager.playBeepSoundAndVibrate();
             Result rawResult = result.getResult();
-            ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(ScannerActivity.this, rawResult);
 
 
-            boolean fromLiveScan = result.getBitmap() != null;
-            if (fromLiveScan) {
-                mHistoryManager.addHistoryItem(rawResult, resultHandler);
-                // Then not from history, so beep/vibrate and we have an image to draw on
-                beepManager.playBeepSoundAndVibrate();
-                drawResultPoints(result.getBitmap(), result.getBitmapScaleFactor(), rawResult);
-            }
+            handleResult(result.getBitmap(), result.getBitmapScaleFactor(), rawResult);
 
-            //TODO: ...
+        }
+
+        @Override
+        public void possibleResultPoints(List<ResultPoint> resultPoints) {
+        }
+    };
+
+    private void handleResult(Bitmap scannedImage, float scaleFactor, Result rawResult) {
+        mResultShown = true;
+        ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(ScannerActivity.this, rawResult);
+
+        boolean fromLiveScan = scannedImage != null;
+        if (fromLiveScan) {
+            mHistoryManager.addHistoryItem(rawResult, resultHandler);
+            // Then not from history, so beep/vibrate and we have an image to draw on
+            beepManager.playBeepSoundAndVibrate();
+            drawResultPoints(scannedImage, scaleFactor, rawResult);
+        }
+
+        //TODO: ...
 //            switch (result.) {
 //                case NATIVE_APP_INTENT:
 //                case PRODUCT_SEARCH_LINK:
@@ -202,27 +218,23 @@ public class ScannerActivity extends AppCompatActivity {
 //                    }
 //                    break;
 //                case NONE:
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ScannerActivity.this);
-                    if (fromLiveScan && prefs.getBoolean(PreferencesActivity.KEY_BULK_MODE, false)) {
-                        Toast.makeText(getApplicationContext(),
-                                getResources().getString(R.string.msg_bulk_mode_scanned) + " ("
-                                        + rawResult.getText() + ')',
-                                Toast.LENGTH_SHORT).show();
-                        maybeSetClipboard(resultHandler);
-                        // Wait a moment or else it will scan the same barcode continuously about 3
-                        // times
-                        restartPreviewAfterDelay(BULK_MODE_SCAN_DELAY_MS);
-                    } else {
-                        handleDecodeInternally(rawResult, resultHandler, result.getBitmap());
-                    }
+
+
+        if (fromLiveScan && mPrefs.getBoolean(PreferencesActivity.KEY_BULK_MODE, false)) {
+            Toast.makeText(getApplicationContext(),
+                    getResources().getString(R.string.msg_bulk_mode_scanned) + " ("
+                            + rawResult.getText() + ')',
+                    Toast.LENGTH_SHORT).show();
+            maybeSetClipboard(resultHandler);
+            // Wait a moment or else it will scan the same barcode continuously about 3
+            // times
+            restartPreviewAfterDelay(BULK_MODE_SCAN_DELAY_MS);
+        } else {
+            handleDecodeInternally(rawResult, resultHandler, scannedImage);
+        }
 //                    break;
 //            }
-        }
-
-        @Override
-        public void possibleResultPoints(List<ResultPoint> resultPoints) {
-        }
-    };
+    }
 
     private void maybeSetClipboard(ResultHandler resultHandler) {
         if (copyToClipboard && !resultHandler.areContentsSecure()) {
@@ -329,6 +341,24 @@ public class ScannerActivity extends AppCompatActivity {
         return true;
     }
 
+    private void decodeOrStoreSavedBitmap(Bitmap bitmap, Result result) {
+        // Bitmap isn't used yet -- will be used soon
+//        if (handler == null) {
+//            savedResultToShow = result;
+//        } else {
+//            if (result != null) {
+//                savedResultToShow = result;
+//            }
+//            if (savedResultToShow != null) {
+//                Message message = Message.obtain(handler, R.id.decode_succeeded, savedResultToShow);
+//                handler.sendMessage(message);
+//            }
+//            savedResultToShow = null;
+//        }
+        handleResult(bitmap, 0, result);
+//        handleDecodeInternally(result, bitmap);
+    }
+
     private void setTorch(boolean torchActive) {
         if(torchActive)
             barcodeScannerView.setTorchOn();
@@ -342,6 +372,7 @@ public class ScannerActivity extends AppCompatActivity {
         barcodeScannerView.decodeSingle(callback);
         resultView.setVisibility(View.GONE);
         statusView.setVisibility(View.VISIBLE);
+        mResultShown = false;
     }
 
     private void setAppBarForResult(){
@@ -359,7 +390,7 @@ public class ScannerActivity extends AppCompatActivity {
     }
 
     private void showResultView() {
-
+        mResultShown = true;
         barcodeScannerView.getViewFinder().setVisibility(View.INVISIBLE);
         resultView.setVisibility(View.VISIBLE);
         statusView.setVisibility(View.GONE);
@@ -382,10 +413,15 @@ public class ScannerActivity extends AppCompatActivity {
         }
     }
 
-    public void restartPreviewAfterDelay(long delayMS) { // TODO: might be removed
-        if (getHandler() != null) {
-            getHandler().sendEmptyMessageDelayed(R.id.restart_preview, delayMS);
-        }
+    public void restartPreviewAfterDelay(long delayMS) {
+        // TODO: refactor into delyed job or so....
+
+        // mResultShown = false;
+
+//        if (getHandler() != null) {
+//            getHandler().sendEmptyMessageDelayed(R.id.restart_preview, delayMS);
+//        }
+        hideResultView();
         barcodeScannerView.decodeSingle(callback);
     }
 
@@ -396,9 +432,7 @@ public class ScannerActivity extends AppCompatActivity {
 
         maybeSetClipboard(resultHandler);
 
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-
-        if (resultHandler.getDefaultButtonID() != null && prefs.getBoolean(
+        if (resultHandler.getDefaultButtonID() != null && mPrefs.getBoolean(
                 PreferencesActivity.KEY_AUTO_OPEN_WEB, false)) {
             resultHandler.handleButtonPress(resultHandler.getDefaultButtonID());
             return;
