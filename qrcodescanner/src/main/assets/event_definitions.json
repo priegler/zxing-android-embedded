@@ -1,0 +1,38 @@
+{
+  "event_list" : [
+    {
+      "name": "scan_screen"
+    },
+    {
+      "name": "settings_screen"
+    },
+    {
+      "name": "history_screen"
+    },
+    {
+      "name": "history_show"
+    }
+  ],
+  "parameter_list":[
+    {
+      "reference" : "somereference",
+      "name": "select_content",
+      "type": "string"
+    },
+    {
+      "reference" : "anotherreference",
+      "name": "payment",
+      "type": "double"
+    }
+  ],
+  "constant_list":[
+    {
+      "name": "scan_screen",
+      "value": "HOME_SCREEN"
+    },
+    {
+      "name": "history_screen",
+      "value": "HISTORY_SCREEN"
+    }
+  ]
+}

@@ -38,6 +38,7 @@ import android.widget.ListView;
 
 import com.google.zxing.client.android.Intents;
 
+import at.nineyards.analytics.AnalyticsManager;
 import at.nineyards.qrcodescanner.R;
 import at.nineyards.qrcodescanner.ScannerActivity;
 
@@ -73,6 +74,8 @@ public final class HistoryActivity extends AppCompatActivity implements
     @Override
     protected void onResume() {
         super.onResume();
+        AnalyticsManager analyticsManger = AnalyticsManager.Companion.getInstance();
+        analyticsManger.sendEvent("history_screen");
         reloadHistoryItems();
     }
 

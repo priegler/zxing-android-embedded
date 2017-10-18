@@ -31,12 +31,17 @@ import com.journeyapps.barcodescanner.BarcodeCallback;
 import com.journeyapps.barcodescanner.BarcodeResult;
 import com.journeyapps.barcodescanner.DecoratedBarcodeView;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 
+import at.nineyards.analytics.AnalyticsManager;
+import at.nineyards.analytics.AnalyticsProviderType;
+import at.nineyards.analytics.FirebaseProvider;
 import at.nineyards.qrcodescanner.camera.FrontLightMode;
 import at.nineyards.qrcodescanner.clipboard.ClipboardInterface;
 import at.nineyards.qrcodescanner.history.HistoryActivity;
@@ -75,6 +80,7 @@ public class ScannerActivity extends AppCompatActivity {
 
     private HistoryManager mHistoryManager;
     private boolean mResultShown = false;
+    private AnalyticsManager mAnalyticsManger;
 
 
 //    private ScannerActivityHandler handler;
@@ -88,8 +94,19 @@ public class ScannerActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_scanner);
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_awesome_toolbar);
-//        toolbar.setTitle();
         setSupportActionBar(toolbar);
+        InputStream io = null;
+        mAnalyticsManger = AnalyticsManager.Companion.getInstance();
+        try {
+            io = getApplication().getAssets().open("event_definitions.json");
+            mAnalyticsManger.initDefinitions(io);
+            mAnalyticsManger.addProvider(new ToastProvider()).addProvider(new FirebaseProvider(this));
+        } catch (IOException e) {
+            e.printStackTrace();
+            // TODO: report to crashlytics
+        }
+
+
 
         setAppBarForScanning();
 
@@ -110,6 +127,17 @@ public class ScannerActivity extends AppCompatActivity {
         updateFlashMenuItem();
     }
 
+    private class ToastProvider implements AnalyticsProviderType {
+
+        @Override
+        public void logEvent(String eventName, Bundle params) {
+            String text = "ToastProvider \n logEvent='"+ eventName+ "'\n" + params.toString();
+            Toast.makeText(getApplicationContext(), text, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+
+
     public void startScanning() {
         barcodeScannerView.decodeSingle(callback);
     }
@@ -124,6 +152,8 @@ public class ScannerActivity extends AppCompatActivity {
         barcodeScannerView.resume();
 
 //        handler = null;
+
+        mAnalyticsManger.sendEvent("scan_screen");
 
     }
 
