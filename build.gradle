@@ -6,6 +6,7 @@ buildscript {
     dependencies {
         classpath 'com.android.tools.build:gradle:2.3.3'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.0'
+        classpath 'com.google.gms:google-services:3.1.0'
     }
 }
 
@@ -21,4 +22,10 @@ subprojects {
     ext.androidBuildTools = '25.0.2'
     ext.androidTargetSdk = 25
     ext.zxingCore = 'com.google.zxing:core:3.3.0'
+}
+
+allprojects {
+    repositories {
+        maven { url 'https://jitpack.io' }
+    }
 }

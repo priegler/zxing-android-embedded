@@ -35,3 +35,5 @@ dependencies {
     compile project(path: ':zxing-android-embedded')
     compile 'io.github.yavski:fab-speed-dial:1.0.6'
 }
+
+apply plugin: 'com.google.gms.google-services'
