@@ -65,7 +65,11 @@
             android:label="@string/app_picker_name"
             android:stateNotNeeded="true" />
 
-
+        <meta-data
+            android:name="io.fabric.ApiKey"
+            android:value="e317ef3d59bbe5fe98324fcc33a266263690721f" />
     </application>
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

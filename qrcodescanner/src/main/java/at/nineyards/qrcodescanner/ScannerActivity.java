@@ -52,6 +52,8 @@ import at.nineyards.qrcodescanner.result.ResultHandlerFactory;
 import at.nineyards.qrcodescanner.result.supplement.SupplementalInfoRetriever;
 import at.nineyards.qrcodescanner.share.ShareActivity;
 import io.github.yavski.fabspeeddial.FabSpeedDial;
+import com.crashlytics.android.Crashlytics;
+import io.fabric.sdk.android.Fabric;
 
 /**
  * Sample Activity extending from ActionBarActivity to display a Toolbar.
@@ -92,6 +94,7 @@ public class ScannerActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        Fabric.with(this, new Crashlytics());
         setContentView(R.layout.activity_scanner);
         Toolbar toolbar = (Toolbar) findViewById(R.id.my_awesome_toolbar);
         setSupportActionBar(toolbar);
@@ -103,7 +106,7 @@ public class ScannerActivity extends AppCompatActivity {
             mAnalyticsManger.addProvider(new ToastProvider()).addProvider(new FirebaseProvider(this));
         } catch (IOException e) {
             e.printStackTrace();
-            // TODO: report to crashlytics
+            Crashlytics.logException(e);
         }
 
 
@@ -459,7 +462,6 @@ public class ScannerActivity extends AppCompatActivity {
     // Put up our own UI for how to handle the decoded contents.
     private void handleDecodeInternally(Result rawResult, final ResultHandler resultHandler,
             Bitmap barcode) {
-
         maybeSetClipboard(resultHandler);
 
         if (resultHandler.getDefaultButtonID() != null && mPrefs.getBoolean(

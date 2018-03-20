@@ -1,4 +1,16 @@
 apply plugin: 'com.android.application'
+apply plugin: 'io.fabric'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabric.io/public' }
+}
+
+dependencies {
+    compile('com.crashlytics.sdk.android:crashlytics:2.7.0@aar') {
+        transitive = true;
+    }
+}
 
 android {
     compileSdkVersion 26
@@ -13,6 +25,10 @@ android {
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
 
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
     }
     buildTypes {
         release {
@@ -37,7 +53,6 @@ dependencies {
     compile ('com.github.Lois9Y:AnalyticsManager:32254dadc7', {
         exclude group: 'com.android.support', module: 'appcompat-v7'
     })
-    //compile 'com.google.firebase'
 }
 
 apply plugin: 'com.google.gms.google-services'
