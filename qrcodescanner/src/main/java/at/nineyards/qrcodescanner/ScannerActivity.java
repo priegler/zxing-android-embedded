@@ -227,6 +227,8 @@ public class ScannerActivity extends AppCompatActivity {
 
     private void handleResult(Bitmap scannedImage, float scaleFactor, Result rawResult) {
         mResultShown = true;
+        mAnalyticsManger.sendEvent("action", mAnalyticsManger.constant(Util.getActionContentType(mAnalyticsManger, "scan_success")),
+                rawResult.getBarcodeFormat().toString());
         ResultHandler resultHandler = ResultHandlerFactory.makeResultHandler(ScannerActivity.this, rawResult);
 
         boolean fromLiveScan = scannedImage != null;
@@ -235,6 +237,8 @@ public class ScannerActivity extends AppCompatActivity {
             // Then not from history, so beep/vibrate and we have an image to draw on
             beepManager.playBeepSoundAndVibrate();
             drawResultPoints(scannedImage, scaleFactor, rawResult);
+            mAnalyticsManger.sendEvent("action", mAnalyticsManger.constant(Util.getActionContentType(mAnalyticsManger, "decode_success")),
+                    resultHandler.getType().toString());
         }
 
         //TODO: ...

@@ -33,6 +33,11 @@
     {
       "name": "history_screen",
       "value": "HISTORY_SCREEN"
+    },
+    {
+      "name": "scan_success",
+      "value": "SCAN_SUCCESS"
+
     }
   ]
 }
